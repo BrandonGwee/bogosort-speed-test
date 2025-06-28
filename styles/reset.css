@@ -1,0 +1,27 @@
+body {
+    /* font-family: */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    background-color: aliceblue;
+}
+
+#game-container {
+    border: 2px solid black;
+    padding: 20px;
+    margin-top: 20px;
+    background-color: whitesmoke;
+    position: relative;
+}
+
+canvas {
+    background-color: white;
+}
+
+#timer {
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+}
