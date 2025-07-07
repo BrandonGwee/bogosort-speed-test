@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = canvas.getContext('2d');
     const timerDisplay = document.getElementById('timer');
     const gameContainer = document.getElementById('game-container');
-    const winSound = document.getElementById('winSound');
+    const winSound = document.getElementById('ding');
 
     // Game State Variables
     let array = [];
@@ -12,14 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerInterval = null;
     let startTime = 0;
     let lastInputTime = 0;
-    const inputDebounceTime = 100; // milliseconds to prevent holding inputs
+    const inputDebounceTime = 1; // milliseconds to prevent holding inputs
 
     // Box shaking variables
     const initialShakeFactor = 5; // Pixels to shake
     let shakeFactor = initialShakeFactor;
-    // The x and y coordinates refer to the top-left corner of the game-container div.
-    let boxOriginalX = gameContainer.offsetLeft;
-    let boxOriginalY = gameContainer.offsetTop;
 
     // Bar drawing constants
     const barWidth = 40;
@@ -81,17 +78,19 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillText(buttonText, buttonX + buttonWidth / 2, buttonY + buttonHeight / 2);
     }
 
+    // In game.js
+
     function animate() {
-        if (isShuffled && !isSorted(array)) {
-            // Apply shake effect to the container
-            const shakeX = boxOriginalX + (Math.random() > 0.5 ? 1 : -1) * shakeFactor;
-            const shakeY = boxOriginalY + (Math.random() > 0.5 ? 1 : -1) * shakeFactor;
-            gameContainer.style.left = `${shakeX}px`;
-            gameContainer.style.top = `${shakeY}px`;
+        if (!isSorted(array)) {
+            shakeFactor += 0.2;
+            // Apply shake effect using transform
+            const shakeX = (Math.random() > 0.5 ? 1 : -1) * shakeFactor;
+            const shakeY = (Math.random() > 0.5 ? 1 : -1) * shakeFactor;
+            gameContainer.style.transform = `translate(${shakeX}px, ${shakeY}px)`;
         } else {
-            // Reset position if not shaking
-            gameContainer.style.left = `${boxOriginalX}px`;
-            gameContainer.style.top = `${boxOriginalY}px`;
+            // Reset position by removing the transform
+            gameContainer.style.transform = 'none';
+            shakeFactor = 0;
         }
 
         drawBars();
@@ -143,9 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 isShuffled = true;
                 buttonText = "Sort!";
                 startTimer();
-                // Store initial position for shaking reference
-                boxOriginalX = gameContainer.offsetLeft;
-                boxOriginalY = gameContainer.offsetTop;
             } else if (isSorted(array)) {
                 // If sorted and button is clicked (after winning), reset
                 resetGameState();
@@ -184,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
     array = [...initialArray];
 
     // Get initial position of gameContainer
-    // We need to wait for the DOM to be fully rendered to get accurate offsetLeft/offsetTop
     // This is often best done after a short delay or within the initial animate call if needed for precise initial positioning.
     // For now, we'll get it when the shuffle button is clicked, as that's when shaking begins.
     // If you need it immediately on load, you might need a slight timeout or ensure the element's position is fixed/absolute.

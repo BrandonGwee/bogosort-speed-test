@@ -1,18 +1,35 @@
+html,
 body {
-    /* font-family: */
+    margin: 0;
+    /* Remove default browser margins */
+    padding: 0;
+    /* Remove default browser padding */
+    width: 100%;
+    /* Ensure they take full width */
+    height: 100%;
+    /* Ensure they take full height */
+}
+
+body {
+    font-family: sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 20px;
-    background-color: aliceblue;
+    /* This centers flex items horizontally in a column layout */
+    /* Removed margin-top from body to allow full height/centering if needed */
+    background-color: #f0f0f0;
 }
 
 #game-container {
-    border: 2px solid black;
+    border: 2px solid #333;
     padding: 20px;
     margin-top: 20px;
-    background-color: whitesmoke;
+    /* This margin now pushes it down from the description */
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     position: relative;
+    /* Keep this for shaking effect */
+    /* The align-items: center on body will handle horizontal centering */
 }
 
 canvas {
