@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let startTime = 0;
     let lastInputTime = 0;
     const inputDebounceTime = 1; // milliseconds to prevent holding inputs
+    let isInputDown = false;
 
     // Box shaking variables
     const initialShakeFactor = 5; // Pixels to shake
@@ -156,9 +157,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('keydown', (event) => {
+        if (isInputDown) {
+            return;
+        }
+
         if (isShuffled && !isSorted(array)) {
+            isInputDown = true;
             handlePlayerInput();
         }
+    });
+
+    document.addEventListener('keyup', (event) => {
+        isInputDown = false;
     });
 
     function handlePlayerInput() {
