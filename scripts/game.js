@@ -15,9 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputDebounceTime = 1; // milliseconds to prevent holding inputs
     let isInputDown = false;
 
-    // Box shaking variables
-    const initialShakeFactor = 5; // Pixels to shake
-    let shakeFactor = initialShakeFactor;
+    // Box shaking variables (UPDATED)
+    let currentShakeOffset = 0; // The current offset applied
+    const maxShakeOffset = 10; // Max pixels to push out on input
+    const shakeDecayRate = 0.8; // How quickly the shake diminishes (0.9 means 90% remains each frame)
+    const ABSOLUTE_MAX_SHAKE = 25; // Define a hard limit for shake intensity
 
     // Bar drawing constants
     const barWidth = 40;
@@ -90,16 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function animate() {
-        // Only shake if the game is active (shuffled and not sorted yet)
-        if (isShuffled && !isSorted(array)) {
-            shakeFactor += 0.2;
-            const shakeX = (Math.random() > 0.5 ? 1 : -1) * shakeFactor;
-            const shakeY = (Math.random() > 0.5 ? 1 : -1) * shakeFactor;
+        // Apply shake effect based on currentShakeOffset (UPDATED)
+        if (currentShakeOffset > 0.5) { // Only apply transform if there's a noticeable shake
+            const shakeX = (Math.random() > 0.5 ? 1 : -1) * currentShakeOffset;
+            const shakeY = (Math.random() > 0.5 ? 1 : -1) * currentShakeOffset;
             gameContainer.style.transform = `translate(${shakeX}px, ${shakeY}px)`;
+            currentShakeOffset *= shakeDecayRate; // Decay the shake
         } else {
-            // Reset position by removing the transform
-            gameContainer.style.transform = 'none';
-            shakeFactor = 0;
+            gameContainer.style.transform = 'none'; // Reset transform if shake is minimal
+            currentShakeOffset = 0; // Ensure it's exactly zero
         }
 
         drawBars();
@@ -120,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         timerInterval = null;
     }
 
-    // Renamed for clarity to indicate it's a full game reset
     function resetGameToInitialState() {
         array = [...initialArray];
         isShuffled = false;
@@ -128,9 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
         timerDisplay.textContent = "0.000s"; // Clear timer display only on full reset
         buttonText = initButtonText;
         lastInputTime = 0; // Reset debounce
-        // Ensure container is back to original position (if applicable)
-        // gameContainer.style.left = `${boxOriginalX}px`;
-        // gameContainer.style.top = `${boxOriginalY}px`;
+        gameContainer.style.transform = 'none'; // Ensure reset if shaking was active
+        currentShakeOffset = 0; // Reset shake offset
     }
 
     // --- Event Handlers ---
@@ -146,25 +145,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
             mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
 
-            // Condition 1: If the game is NOT yet shuffled (i.e., initial state)
-            if (!isShuffled) {
-                // This is the "Initial shuffle" or "Start New Game" logic
-                shuffleArray(array);
+            // If the array is currently sorted (this covers both initial state and post-win state)
+            if (isSorted(array)) {
+                // Now, if it's sorted, we want to START a new game
+                resetGameToInitialState(); // This clears the timer and resets the array
+                shuffleArray(array);      // Then shuffle it immediately to start the game
                 isShuffled = true;
                 buttonText = "Sort!";
                 startTimer();
-            }
-            // Condition 2: If the game is currently sorted (meaning it was just won)
-            // AND isShuffled is false (which it is after a win, as per handlePlayerInput)
-            else if (isSorted(array)) { // This only triggers if !isShuffled was false
-                resetGameToInitialState();
-            }
-            // Condition 3: If the game is shuffled and not yet sorted (game is in progress)
-            else {
+                // Apply initial shake on game start
+                currentShakeOffset = 1;
+            } else {
+                // If it's not sorted (game is in progress), treat as a player input
                 handlePlayerInput();
             }
         } else if (isShuffled && !isSorted(array)) {
-            // Click outside button, but game is active
+            // Click outside button, but game is active, treat as player input
             handlePlayerInput();
         }
     });
@@ -183,10 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keyup', (event) => {
         isInputDown = false;
-        // Only reset shake factor if game is still active
-        if (isShuffled && !isSorted(array)) {
-            shakeFactor = initialShakeFactor;
-        }
+        // No longer need to reset shakeFactor here, as it's handled by decay or input
     });
 
     function handlePlayerInput() {
@@ -197,13 +190,14 @@ document.addEventListener('DOMContentLoaded', () => {
         lastInputTime = currentTime;
         shuffleArray(array);
 
+        // MODIFIED: Increase currentShakeOffset, but cap it
+        currentShakeOffset = Math.min(currentShakeOffset + 5, ABSOLUTE_MAX_SHAKE); // Increase by 5, capped at 25
+
         if (isSorted(array)) {
             stopTimer();
-            // IMPORTANT: Do NOT reset timerDisplay.textContent here.
-            // It will keep the final time.
             buttonText = initButtonText; // Revert button text to "Shuffle!"
             winSound.play();
-            isShuffled = false; // Stop shaking and revert button color
+            isShuffled = false; // Stop active game state (stops further inputs and active shaking)
         }
     }
 
