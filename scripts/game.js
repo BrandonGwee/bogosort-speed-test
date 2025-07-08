@@ -177,10 +177,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return; // Debounce: ignore rapid inputs
         }
         lastInputTime = currentTime;
+        shuffleArray(array);
+        shakeFactor = initialShakeFactor; // Reset shake factor when a new input is detected
 
-        if (!isSorted(array)) {
-            shuffleArray(array);
-            shakeFactor = initialShakeFactor; // Reset shake factor when a new input is detected
+        if (isSorted(array)) {
+            stopTimer();
+            buttonText = "Shuffle!";
+            winSound.play();
         }
     }
 
