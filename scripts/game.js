@@ -70,7 +70,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function drawButton() {
         const buttonX = (canvas.width - buttonWidth) / 2;
-        ctx.fillStyle = isShuffled ? '#FFC107' : '#2196F3'; // Orange when sorting, Blue when shuffling
+
+        // Determine button color based on buttonText
+        if (buttonText === "Shuffle!") {
+            ctx.fillStyle = '#2196F3'; // Blue for "Shuffle!"
+        } else if (buttonText === "Sort!") {
+            ctx.fillStyle = '#FFC107'; // Orange for "Sort!"
+        } else {
+            ctx.fillStyle = '#CCCCCC'; // Fallback
+        }
+
         ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
 
         ctx.fillStyle = '#fff';
@@ -80,12 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillText(buttonText, buttonX + buttonWidth / 2, buttonY + buttonHeight / 2);
     }
 
-    // In game.js
-
     function animate() {
-        if (!isSorted(array)) {
+        // Only shake if the game is active (shuffled and not sorted yet)
+        if (isShuffled && !isSorted(array)) {
             shakeFactor += 0.2;
-            // Apply shake effect using transform
             const shakeX = (Math.random() > 0.5 ? 1 : -1) * shakeFactor;
             const shakeY = (Math.random() > 0.5 ? 1 : -1) * shakeFactor;
             gameContainer.style.transform = `translate(${shakeX}px, ${shakeY}px)`;
@@ -113,16 +120,17 @@ document.addEventListener('DOMContentLoaded', () => {
         timerInterval = null;
     }
 
-    function resetGameState() {
+    // Renamed for clarity to indicate it's a full game reset
+    function resetGameToInitialState() {
         array = [...initialArray];
         isShuffled = false;
         stopTimer();
-        timerDisplay.textContent = "0.000s";
-        buttonText = "Shuffle!";
+        timerDisplay.textContent = "0.000s"; // Clear timer display only on full reset
+        buttonText = initButtonText;
         lastInputTime = 0; // Reset debounce
-        // Ensure container is back to original position
-        gameContainer.style.left = `${boxOriginalX}px`;
-        gameContainer.style.top = `${boxOriginalY}px`;
+        // Ensure container is back to original position (if applicable)
+        // gameContainer.style.left = `${boxOriginalX}px`;
+        // gameContainer.style.top = `${boxOriginalY}px`;
     }
 
     // --- Event Handlers ---
@@ -138,17 +146,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
             mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
 
+            // Condition 1: If the game is NOT yet shuffled (i.e., initial state)
             if (!isShuffled) {
-                // Initial shuffle
+                // This is the "Initial shuffle" or "Start New Game" logic
                 shuffleArray(array);
                 isShuffled = true;
                 buttonText = "Sort!";
                 startTimer();
-            } else if (isSorted(array)) {
-                // If sorted and button is clicked (after winning), reset
-                resetGameState();
-            } else {
-                // If already shuffled and not sorted, treat as an input
+            }
+            // Condition 2: If the game is currently sorted (meaning it was just won)
+            // AND isShuffled is false (which it is after a win, as per handlePlayerInput)
+            else if (isSorted(array)) { // This only triggers if !isShuffled was false
+                resetGameToInitialState();
+            }
+            // Condition 3: If the game is shuffled and not yet sorted (game is in progress)
+            else {
                 handlePlayerInput();
             }
         } else if (isShuffled && !isSorted(array)) {
@@ -162,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Allow input only if game is shuffled and not yet sorted
         if (isShuffled && !isSorted(array)) {
             isInputDown = true;
             handlePlayerInput();
@@ -170,8 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keyup', (event) => {
         isInputDown = false;
-        shakeFactor = initialShakeFactor; // Reset shake factor when a new input is detected
-
+        // Only reset shake factor if game is still active
+        if (isShuffled && !isSorted(array)) {
+            shakeFactor = initialShakeFactor;
+        }
     });
 
     function handlePlayerInput() {
@@ -184,8 +199,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isSorted(array)) {
             stopTimer();
-            buttonText = initButtonText;
+            // IMPORTANT: Do NOT reset timerDisplay.textContent here.
+            // It will keep the final time.
+            buttonText = initButtonText; // Revert button text to "Shuffle!"
             winSound.play();
+            isShuffled = false; // Stop shaking and revert button color
         }
     }
 
@@ -193,11 +211,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set initial array
     array = [...initialArray];
-
-    // Get initial position of gameContainer
-    // This is often best done after a short delay or within the initial animate call if needed for precise initial positioning.
-    // For now, we'll get it when the shuffle button is clicked, as that's when shaking begins.
-    // If you need it immediately on load, you might need a slight timeout or ensure the element's position is fixed/absolute.
-
     animate(); // Start the animation loop
 });
