@@ -29,7 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const buttonWidth = 120;
     const buttonHeight = 40;
     const buttonY = canvas.height - buttonHeight - 10; // Position above canvas bottom
-    let buttonText = "Shuffle!";
+    const initButtonText = "Shuffle!"
+    let buttonText = initButtonText;
 
     // --- Utility Functions ---
 
@@ -169,6 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keyup', (event) => {
         isInputDown = false;
+        shakeFactor = initialShakeFactor; // Reset shake factor when a new input is detected
+
     });
 
     function handlePlayerInput() {
@@ -178,11 +181,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         lastInputTime = currentTime;
         shuffleArray(array);
-        shakeFactor = initialShakeFactor; // Reset shake factor when a new input is detected
 
         if (isSorted(array)) {
             stopTimer();
-            buttonText = "Shuffle!";
+            buttonText = initButtonText;
             winSound.play();
         }
     }
